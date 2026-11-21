@@ -1,0 +1,31 @@
+# A complete view with Fluid Glass Cards (raw configuration of one view)
+title: Home
+path: home
+background:
+  image: /local/background.jpg
+  attachment: fixed
+cards:
+  - type: custom:fluid-glass-card
+    title: Living room
+    cards:
+      - type: tile
+        entity: light.living_room
+      - type: tile
+        entity: cover.living_room
+  - type: custom:fluid-glass-drop-card
+    entity: sensor.house_power
+    name: House
+  - type: custom:fluid-glass-card
+    layout: grid
+    columns: 2
+    cards:
+      - type: tile
+        entity: light.kitchen
+      - type: tile
+        entity: sensor.living_room_temperature
+  - type: custom:fluid-glass-nav-card
+    position: bottom
+    items:
+      - { name: Home, icon: mdi:home, path: /lovelace/home }
+      - { name: Rooms, icon: mdi:sofa, path: /lovelace/rooms }
+      - { name: Energy, icon: mdi:flash, path: /lovelace/energy }
