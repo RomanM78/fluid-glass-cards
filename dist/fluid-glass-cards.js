@@ -1,7 +1,7 @@
 // Fluid Glass Cards – glass with refraction, elastic surfaces and glass drops for any Home Assistant dashboard
 // MIT License, (c) 2026 RomanM78 – https://github.com/RomanM78/fluid-glass-cards
 (() => {
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const UA = navigator.userAgent, REFRACT = /Chrome\/|Chromium\//.test(UA) && !/Firefox\//.test(UA);
 const RM = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const TINTS = { none: null, amber: "255,190,90", blue: "110,180,255", violet: "180,140,255", green: "110,220,150", rose: "255,140,190", cyan: "100,230,230", orange: "255,150,90" };
@@ -220,10 +220,11 @@ class FluidGlassView extends HTMLElement {
     if (c.background_image) { const bg = deepFind(document.querySelector("home-assistant") && document.querySelector("home-assistant").shadowRoot, "hui-view-background"); const t = bg || v; t.style.backgroundImage = `url("${c.background_image}")`; t.style.backgroundSize = "cover"; t.style.backgroundPosition = "center"; t.style.backgroundAttachment = "fixed"; }
     const cards = []; const walk = (root, d) => { if (!root || d > 10) return; for (const el of root.querySelectorAll("*")) { if (el.tagName === "HA-CARD") cards.push(el); if (el.shadowRoot && el !== this) walk(el.shadowRoot, d + 1); } }; walk(v.shadowRoot || v, 0);
     for (const card of cards) { const R = card.shadowRoot; if (!R) continue; if (card.closest && card.closest("fluid-glass-card")) continue;
+      const owner = card.getRootNode() && card.getRootNode().host; if (owner && /^HUI-(HEADING|MARKDOWN)-CARD$/.test(owner.tagName) && !c.include_headings) continue;
       let st = R.__fgSt; if (!st) { st = R.__fgSt = document.createElement("style"); R.appendChild(st); if (c.press !== false) elastic(card, true); }
       const w = Math.round(card.offsetWidth), h = Math.round(card.offsetHeight); if (!w || !h) continue; const rad = c.radius != null ? c.radius : parseFloat(getComputedStyle(card).borderTopLeftRadius) || 12;
       const blur = `blur(${c.blur}px) saturate(1.3)`, f = REFRACT && c.refraction !== false && w * h < 1200000 ? `url(#${filterFor(R, w, h, rad, c.strength)}) ${blur}` : blur;
-      const css = `:host{${GLASS(rad, 1)}!important;${tint ? `background-color:rgba(${tint},.16)!important;` : ""}border:0!important;-webkit-backdrop-filter:${blur}!important;backdrop-filter:${f}!important}`; if (st.textContent !== css) st.textContent = css; }
+      const css = `:host{${GLASS(rad, 1).split(";").map((d) => d + "!important").join(";")};${tint ? `background-color:rgba(${tint},.16)!important;` : ""}border:0!important;-webkit-backdrop-filter:${blur}!important;backdrop-filter:${f}!important}`; if (st.textContent !== css) st.textContent = css; }
   }
 }
 
