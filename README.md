@@ -137,6 +137,7 @@ background_image: /local/background.jpg
 | `strength` | `1` | strength of the refraction |
 | `refraction` | `true` | lens effect at the edges |
 | `press` | `true` | elastic press effect |
+| `include_headings` | `false` | also turn heading and markdown cards into glass |
 
 ## Browsers
 

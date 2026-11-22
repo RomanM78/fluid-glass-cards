@@ -1,7 +1,7 @@
 // Fluid Glass Cards – glass with refraction, elastic surfaces and glass drops for any Home Assistant dashboard
 // MIT License, (c) 2026 RomanM78 – https://github.com/RomanM78/fluid-glass-cards
 (() => {
-const VERSION = "0.1.1";
+const VERSION = "0.1.0";
 const UA = navigator.userAgent, REFRACT = /Chrome\/|Chromium\//.test(UA) && !/Firefox\//.test(UA);
 const RM = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const TINTS = { none: null, amber: "255,190,90", blue: "110,180,255", violet: "180,140,255", green: "110,220,150", rose: "255,140,190", cyan: "100,230,230", orange: "255,150,90" };
