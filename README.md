@@ -4,6 +4,8 @@ Glass for any Home Assistant dashboard: frames with real refraction around your 
 draggable glass drops that show a value, a glass navigation bar with a sliding drop, and a one-line
 switch that turns every card of a view into glass.
 
+![Fluid Glass Cards in motion](docs/demo.gif)
+
 | Frame, drop and navigation | Whole view in glass | Phone |
 |---|---|---|
 | ![Glass frame, drop and navigation](docs/frame.webp) | ![Whole view in glass](docs/view.webp) | ![Phone](docs/phone.webp) |
