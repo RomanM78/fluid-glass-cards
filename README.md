@@ -15,8 +15,7 @@ no dependencies, one file.
 
 ## Installation
 
-**Marketplace / HACS:** search for *Fluid Glass Cards* and download it. If it is not listed yet, add
-`https://github.com/RomanM78/fluid-glass-cards` as a custom repository (category *Dashboard*).
+**Marketplace / HACS:** search for *Fluid Glass Cards* and download it.
 
 **Manual:** copy `dist/fluid-glass-cards.js` to `config/www/` and add it as a dashboard resource:
 `/local/fluid-glass-cards.js`, type *JavaScript module*.
