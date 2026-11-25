@@ -1,7 +1,7 @@
 // Fluid Glass Cards – glass with refraction, elastic surfaces and glass drops for any Home Assistant dashboard
 // MIT License, (c) 2026 RomanM78 – https://github.com/RomanM78/fluid-glass-cards
 (() => {
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const UA = navigator.userAgent, REFRACT = /Chrome\/|Chromium\//.test(UA) && !/Firefox\//.test(UA);
 const RM = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const TINTS = { none: null, amber: "255,190,90", blue: "110,180,255", violet: "180,140,255", green: "110,220,150", rose: "255,140,190", cyan: "100,230,230", orange: "255,150,90" };
@@ -71,6 +71,16 @@ function loadImg(src, cb) { let e = IMGS.get(src); if (e) { if (e.done) cb(e); e
 let FALLBACK; function fallbackTex() { if (FALLBACK) return FALLBACK; const c = document.createElement("canvas"); c.width = 640; c.height = 400; const g = c.getContext("2d"), gr = g.createLinearGradient(0, 0, 320, 400); ["#5f86b5", "#9cb8dc", "#c9b8d8", "#e7b8a6"].forEach((p, i) => gr.addColorStop(i / 3, p)); g.fillStyle = gr; g.fillRect(0, 0, 640, 400);
   g.strokeStyle = "rgba(255,255,255,.35)"; for (let i = 1; i < 30; i++) { g.beginPath(); g.arc(160, 130, i * 18, 0, 7); g.stroke(); } return (FALLBACK = c); }
 
+// glass with refraction for one ha-card: styles go into the card's own shadow root, where the filter can be found
+function glassify(card, c, tint) {
+  const R = card.shadowRoot; if (!R) return;
+  let st = R.__fgSt; if (!st) { st = R.__fgSt = document.createElement("style"); R.appendChild(st); if (c.press !== false) elastic(card, true); }
+  const w = Math.round(card.offsetWidth), h = Math.round(card.offsetHeight); if (!w || !h) return; const rad = c.radius != null ? c.radius : parseFloat(getComputedStyle(card).borderTopLeftRadius) || 12;
+  const blur = `blur(${c.blur}px) saturate(1.3)`, f = REFRACT && c.refraction !== false && w * h < 1200000 ? `url(#${filterFor(R, w, h, rad, c.strength || 1)}) ${blur}` : blur;
+  const css = `:host{${GLASS(rad, c.alpha || 1).split(";").map((d) => d + "!important").join(";")};${tint ? `background-color:rgba(${tint},.16)!important;` : ""}border:0!important;-webkit-backdrop-filter:${blur}!important;backdrop-filter:${f}!important}`; if (st.textContent !== css) st.textContent = css;
+}
+const deepCards = (root, skip, out = [], d = 0) => { if (!root || d > 10) return out; for (const el of root.querySelectorAll("*")) { if (el.tagName === "HA-CARD") out.push(el); if (el.shadowRoot && el !== skip) deepCards(el.shadowRoot, skip, out, d + 1); } return out; };
+
 const BASE = `:host{display:block}*{box-sizing:border-box}`;
 const GLASS = (r, a) => `background:linear-gradient(160deg,rgba(255,255,255,${.2 * a}),rgba(255,255,255,${.05 * a}) 55%,rgba(255,255,255,${.11 * a}));box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(255,255,255,.2),inset 0 -1px 0 rgba(255,255,255,.12),0 18px 40px -18px rgba(0,10,40,.45);border-radius:${r}px`;
 
@@ -80,6 +90,8 @@ async function helpers() { return window.loadCardHelpers ? window.loadCardHelper
 class FluidGlassCard extends HTMLElement {
   setConfig(c) { if (!c || !Array.isArray(c.cards)) throw new Error("fluid-glass-card: 'cards' list is required"); this._c = Object.assign({ radius: 28, padding: 12, gap: 10, blur: 14, layout: "vertical", columns: 2, refraction: true, press: true, inner: "glass", strength: 1 }, c); this._build(); }
   set hass(h) { this._h = h; (this._kids || []).forEach((k) => (k.hass = h)); }
+  disconnectedCallback() { clearInterval(this._iv); this._iv = 0; }
+  connectedCallback() { if (this._c && !this._iv && this._kids) this._build(); }
   getCardSize() { return (this._kids || []).reduce((s, k) => s + (k.getCardSize ? k.getCardSize() || 1 : 1), 0) || 2; }
   async _build() {
     const c = this._c, R = this.shadowRoot || this.attachShadow({ mode: "open" }), tint = tintRgb(c.tint);
@@ -94,6 +106,8 @@ class FluidGlassCard extends HTMLElement {
     const box = R.querySelector(".c"), H = await helpers(); this._kids = [];
     for (const cc of c.cards) { let el; try { el = H ? await H.createCardElement(cc) : document.createElement("div"); } catch (e) { el = document.createElement("div"); el.textContent = e.message; } if (this._h) el.hass = this._h; if (c.press !== false) elastic(el, false); box.appendChild(el); this._kids.push(el); }
     if (c.press !== false) elastic(R.querySelector(".f"), true);
+    // inner cards become glass tiles with their own refraction
+    clearInterval(this._iv); if (c.inner !== "clear") { const ic2 = Object.assign({}, c, { radius: Math.max(8, c.radius - c.padding), blur: Math.round(c.blur * .6), alpha: .75, press: false }), go2 = () => { for (const k of this._kids || []) for (const hc of deepCards(k.shadowRoot || k, null)) glassify(hc, ic2, tint); }; this._iv = setInterval(go2, 1500); setTimeout(go2, 150); }
     const lyr = R.querySelector(".l"), go = () => refract(lyr, R, c); this._ro && this._ro.disconnect(); this._ro = new ResizeObserver(go); this._ro.observe(lyr); requestAnimationFrame(go);
   }
   static getStubConfig() { return { cards: [{ type: "tile", entity: "sun.sun" }] }; }
@@ -221,10 +235,8 @@ class FluidGlassView extends HTMLElement {
     const cards = []; const walk = (root, d) => { if (!root || d > 10) return; for (const el of root.querySelectorAll("*")) { if (el.tagName === "HA-CARD") cards.push(el); if (el.shadowRoot && el !== this) walk(el.shadowRoot, d + 1); } }; walk(v.shadowRoot || v, 0);
     for (const card of cards) { const R = card.shadowRoot; if (!R) continue; if (card.closest && card.closest("fluid-glass-card")) continue;
       const owner = card.getRootNode() && card.getRootNode().host; if (owner && /^HUI-(HEADING|MARKDOWN)-CARD$/.test(owner.tagName) && !c.include_headings) continue;
-      let st = R.__fgSt; if (!st) { st = R.__fgSt = document.createElement("style"); R.appendChild(st); if (c.press !== false) elastic(card, true); }
-      const w = Math.round(card.offsetWidth), h = Math.round(card.offsetHeight); if (!w || !h) continue; const rad = c.radius != null ? c.radius : parseFloat(getComputedStyle(card).borderTopLeftRadius) || 12;
-      const blur = `blur(${c.blur}px) saturate(1.3)`, f = REFRACT && c.refraction !== false && w * h < 1200000 ? `url(#${filterFor(R, w, h, rad, c.strength)}) ${blur}` : blur;
-      const css = `:host{${GLASS(rad, 1).split(";").map((d) => d + "!important").join(";")};${tint ? `background-color:rgba(${tint},.16)!important;` : ""}border:0!important;-webkit-backdrop-filter:${blur}!important;backdrop-filter:${f}!important}`; if (st.textContent !== css) st.textContent = css; }
+      glassify(card, c, tint);
+    }
   }
 }
 

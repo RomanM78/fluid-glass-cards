@@ -4,7 +4,7 @@ Glass for any Home Assistant dashboard: frames with real refraction around your 
 draggable glass drops that show a value, a glass navigation bar with a sliding drop, and a one-line
 switch that turns every card of a view into glass.
 
-![Fluid Glass Cards in motion](docs/demo.gif)
+![Fluid Glass Cards in motion](docs/demo.webp)
 
 | Frame, drop and navigation | Whole view in glass | Phone |
 |---|---|---|
@@ -61,7 +61,7 @@ cards:
 | `padding` | `12` | space inside the frame in px |
 | `gap` | `10` | space between the inner cards in px |
 | `blur` | `14` | blur of the glass in px |
-| `strength` | `1` | strength of the refraction (0.5 to 2) |
+| `strength` | `1` | strength of the refraction (0.5 to 2.5) |
 | `refraction` | `true` | set `false` on slow wall tablets: frosted glass only |
 | `press` | `true` | elastic press effect |
 
@@ -141,6 +141,12 @@ background_image: /local/background.jpg
 | `press` | `true` | elastic press effect |
 | `include_headings` | `false` | also turn heading and markdown cards into glass |
 
+## Tips
+
+The lens effect shows best with clear glass over a detailed picture: lower `blur` and raise
+`strength`, for example `blur: 3` and `strength: 2`. The inner cards of a frame refract the
+picture as well.
+
 ## Browsers
 
 Refraction needs a Chromium-based browser: Chrome, Edge, the Home Assistant app on Android, Fully
@@ -149,5 +155,5 @@ press work everywhere. With *reduce motion* switched on in the device, the wobbl
 
 ## Licence
 
-MIT. All code and the pictures in `docs/` are made for this project; the screenshots use a demo
-house and generated backgrounds, no third-party images.
+MIT. All code and the pictures in `docs/` are made for this project; the house pictures in the
+screenshots are AI-generated for this project, no third-party images.

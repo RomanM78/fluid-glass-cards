@@ -1,6 +1,6 @@
 {
   "name": "fluid-glass-cards",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Glass with refraction, draggable glass drops and a glass navigation bar for any Home Assistant dashboard.",
   "license": "MIT"
 }
