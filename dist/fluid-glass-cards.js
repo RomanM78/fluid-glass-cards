@@ -1,7 +1,7 @@
-// Fluid Glass Cards – glass with refraction, elastic surfaces and glass drops for any Home Assistant dashboard
-// MIT License, (c) 2026 RomanM78 – https://github.com/RomanM78/fluid-glass-cards
+// Fluid Glass Cards - glass with refraction, elastic surfaces and glass drops for any Home Assistant dashboard
+// MIT License, (c) 2026 RomanM78 - https://github.com/RomanM78/fluid-glass-cards
 (() => {
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 const UA = navigator.userAgent, REFRACT = /Chrome\/|Chromium\//.test(UA) && !/Firefox\//.test(UA);
 const RM = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const TINTS = { none: null, amber: "255,190,90", blue: "110,180,255", violet: "180,140,255", green: "110,220,150", rose: "255,140,190", cyan: "100,230,230", orange: "255,150,90" };
@@ -111,6 +111,7 @@ class FluidGlassCard extends HTMLElement {
     const lyr = R.querySelector(".l"), go = () => refract(lyr, R, c); this._ro && this._ro.disconnect(); this._ro = new ResizeObserver(go); this._ro.observe(lyr); requestAnimationFrame(go);
   }
   static getStubConfig() { return { cards: [{ type: "tile", entity: "sun.sun" }] }; }
+  static getConfigElement() { return editorFor("frame"); }
 }
 
 // ============ fluid-glass-drop-card: draggable glass drops that show an entity value
@@ -153,7 +154,7 @@ class FluidGlassDropCard extends HTMLElement {
     this._label(); this._ro && this._ro.disconnect(); this._ro = new ResizeObserver(() => { this._home(); this._run(); }); this._ro.observe(w);
   }
   _label() { const c = this._c, D = this._D; if (!D) return; const h = D.drops[0].el; let b = c.text || "", sm = c.name || "";
-    if (c.entity && this._h) { const s = this._h.states[c.entity]; if (s) { const n = Number(s.state); b = Number.isFinite(n) ? (c.decimals != null ? n.toFixed(c.decimals) : String(Math.round(n * 10) / 10)) : (this._h.formatEntityState ? this._h.formatEntityState(s) : s.state); const u = c.unit != null ? c.unit : Number.isFinite(n) ? s.attributes.unit_of_measurement || "" : ""; if (u) b += (u === "%" || u === "°C" || u === "°F" ? "" : " ") + u; if (!sm) sm = s.attributes.friendly_name || ""; } }
+    if (c.entity && this._h) { const s = this._h.states[c.entity]; if (s) { const n = Number(s.state); b = Number.isFinite(n) ? (c.decimals != null ? n.toFixed(c.decimals) : String(Math.round(n * 10) / 10)) : (this._h.formatEntityState ? this._h.formatEntityState(s) : s.state); const u = c.unit != null ? c.unit : Number.isFinite(n) ? s.attributes.unit_of_measurement || "" : ""; if (u) b += (u === "%" || u === "\u00b0C" || u === "\u00b0F" ? "" : " ") + u; if (!sm) sm = s.attributes.friendly_name || ""; } }
     const html = `<b>${String(b).replace(/[<&]/g, "")}</b>${sm ? `<small>${String(sm).replace(/[<&]/g, "")}</small>` : ""}`; if (h.__l !== html) { h.innerHTML = html; h.__l = html; h.setAttribute("aria-label", `${sm} ${b}`); } }
   _home() { const D = this._D, W = D.w.clientWidth, H = D.w.clientHeight; if (!W || !H) return; const c = this._c, a = D.drops[0], b = D.drops[1];
     a.r = Math.min(c.size / 2, H / 2 - 6, W / 2 - 6); b.r = c.second ? a.r * .45 : 0; const hx = c.align === "left" ? a.r + 10 : c.align === "right" ? W - a.r * 2.2 - 10 : W / 2 - (b.r ? a.r * .45 : 0);
@@ -187,11 +188,12 @@ class FluidGlassDropCard extends HTMLElement {
     if (!moving) TICK.delete(this._tick); return moving;
   }
   static getStubConfig() { return { entity: "sun.sun" }; }
+  static getConfigElement() { return editorFor("drop"); }
 }
 
 // ============ fluid-glass-nav-card: glass bar with a sliding drop behind the active entry
 class FluidGlassNavCard extends HTMLElement {
-  setConfig(c) { if (!c || !Array.isArray(c.items) || !c.items.length) throw new Error("fluid-glass-nav-card: 'items' list is required"); this._c = Object.assign({ position: "inline", blur: 16, refraction: true }, c); this._build(); }
+  setConfig(c) { if (!c || !Array.isArray(c.items)) throw new Error("fluid-glass-nav-card: 'items' list is required"); this._c = Object.assign({ position: "inline", blur: 16, refraction: true }, c); this._build(); }
   set hass(h) { this._h = h; }
   getCardSize() { return 1; }
   connectedCallback() { this._loc = () => this._mark(); addEventListener("location-changed", this._loc); addEventListener("popstate", this._loc); this._mark(); }
@@ -218,6 +220,7 @@ ha-icon{--mdc-icon-size:22px}</style>
     const st = Math.min(.5, Math.abs(N.v) / 1200); ind.style.width = N.w + "px"; ind.style.height = th + "px"; ind.style.transform = `translate(${(N.x - N.w * st * .5).toFixed(2)}px,0) scale(${(1 + st).toFixed(4)},${(1 - st * .25).toFixed(4)})`;
     return Math.abs(tx - N.x) > .3 || Math.abs(N.v) > .5; }
   static getStubConfig() { return { items: [{ name: "Home", icon: "mdi:home", path: "/lovelace/0" }] }; }
+  static getConfigElement() { return editorFor("nav"); }
 }
 
 // ============ fluid-glass-view: turns every card of the view into glass (invisible helper card)
@@ -226,6 +229,8 @@ class FluidGlassView extends HTMLElement {
   set hass(h) { this._h = h; }
   getCardSize() { return 0; }
   getGridOptions() { return { rows: 0, columns: 0 }; }
+  static getStubConfig() { return {}; }
+  static getConfigElement() { return editorFor("view"); }
   connectedCallback() { this.style.display = "none"; this._iv = setInterval(() => this._apply(), 1500); setTimeout(() => this._apply(), 300); }
   disconnectedCallback() { clearInterval(this._iv); }
   _view() { let n = this; for (let i = 0; i < 40 && n; i++) { const r = n.getRootNode(); n = n.parentNode || (r && r.host); if (n && n.tagName && /^HUI-(SECTIONS|MASONRY|PANEL|SIDEBAR)-VIEW$|^HUI-VIEW$/.test(n.tagName)) return n; } return null; }
@@ -240,10 +245,91 @@ class FluidGlassView extends HTMLElement {
   }
 }
 
+// ============ visual editors (Home Assistant's own form fields; the card list of the frame uses the stack-card editor of Home Assistant)
+const DEF = {
+  frame: { layout: "vertical", columns: 2, inner: "glass", tint: "none", radius: 28, padding: 12, gap: 10, blur: 14, strength: 1, refraction: true, press: true },
+  drop: { size: 110, second: true, align: "center", tint: "none", tap_action: "more-info" },
+  nav: { position: "inline", blur: 16, refraction: true },
+  view: { tint: "none", blur: 14, strength: 1, refraction: true, press: true, include_headings: false },
+};
+const TXT = {
+  en: { title: "Title", layout: "Layout", columns: "Columns", inner: "Inner cards", tint: "Tint", blur: "Blur", strength: "Refraction strength", radius: "Corner radius (px)", padding: "Padding (px)", gap: "Gap (px)", refraction: "Refraction at the edges", press: "Elastic press", entity: "Entity", name: "Name", text: "Fixed text instead of a value", unit: "Unit", decimals: "Decimals (empty = auto)", size: "Size of the drop (px)", height: "Height of the card (px, empty = auto)", second: "Small second drop", align: "Alignment", tap_action: "Tap", image: "Picture to refract (empty = view background)", position: "Position", background_image: "Background picture of the view", include_headings: "Also heading and markdown cards", icon: "Icon", path: "Page", glass: "Glass", advanced: "Advanced", cards: "Cards", items: "Entries", add: "Add entry", up: "Move up", down: "Move down", del: "Delete",
+    o: { vertical: "Vertical", horizontal: "Horizontal", grid: "Grid", glass: "Glass tiles", clear: "Transparent", none: "None", amber: "Amber", blue: "Blue", violet: "Violet", green: "Green", rose: "Rose", cyan: "Cyan", orange: "Orange", left: "Left", center: "Centre", right: "Right", "more-info": "More info", nothing: "Nothing", inline: "Inside the card", bottom: "Fixed at the bottom" } },
+  de: { title: "Titel", layout: "Anordnung", columns: "Spalten", inner: "Innere Karten", tint: "F\u00e4rbung", blur: "Unsch\u00e4rfe", strength: "Brechungsst\u00e4rke", radius: "Eckenradius (px)", padding: "Innenabstand (px)", gap: "Abstand (px)", refraction: "Brechung an den Kanten", press: "Elastischer Druck-Effekt", entity: "Entit\u00e4t", name: "Name", text: "Fester Text statt Wert", unit: "Einheit", decimals: "Nachkommastellen (leer = automatisch)", size: "Gr\u00f6\u00dfe des Tropfens (px)", height: "H\u00f6he der Karte (px, leer = automatisch)", second: "Kleiner zweiter Tropfen", align: "Ausrichtung", tap_action: "Antippen", image: "Bild f\u00fcr die Brechung (leer = Ansichtshintergrund)", position: "Position", background_image: "Hintergrundbild der Ansicht", include_headings: "Auch \u00dcberschrift- und Markdown-Karten", icon: "Symbol", path: "Seite", glass: "Glas", advanced: "Erweitert", cards: "Karten", items: "Eintr\u00e4ge", add: "Eintrag hinzuf\u00fcgen", up: "Nach oben", down: "Nach unten", del: "L\u00f6schen",
+    o: { vertical: "Vertikal", horizontal: "Horizontal", grid: "Raster", glass: "Glaskacheln", clear: "Durchsichtig", none: "Keine", amber: "Bernstein", blue: "Blau", violet: "Violett", green: "Gr\u00fcn", rose: "Rosa", cyan: "Cyan", orange: "Orange", left: "Links", center: "Mitte", right: "Rechts", "more-info": "Details \u00f6ffnen", nothing: "Nichts", inline: "In der Karte", bottom: "Unten fixiert" } },
+};
+const P = { up: "M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z", down: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z", del: "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" };
+const names = (s, out = []) => { for (const x of s) { if (x.schema) names(x.schema, out); else if (x.name) out.push(x.name); } return out; };
+
+class FluidGlassEditor extends HTMLElement {
+  set hass(h) { const first = !this._h; this._h = h; for (const f of this.shadowRoot ? this.shadowRoot.querySelectorAll("ha-form") : []) f.hass = h; if (this._ed) this._ed.hass = h; if (first && this._cfg) this._render(true); }
+  set lovelace(l) { this._lv = l; if (this._ed) this._ed.lovelace = l; }
+  setConfig(c) { this._cfg = Object.assign({}, c); this._render(false); }
+  get _t() { const l = (this._h && ((this._h.locale && this._h.locale.language) || this._h.language)) || navigator.language || "en"; return TXT[/^de/i.test(l) ? "de" : "en"]; }
+  _sel(keys) { const o = this._t.o; return { select: { mode: "dropdown", options: keys.map((k) => ({ value: k === "nothing" ? "none" : k, label: o[k] || k })) } }; }
+  _schema() {
+    const k = this.kind, c = this._cfg, num = (min, max, step, mode) => ({ number: { min, max, step: step || 1, mode: mode || "slider" } }), b = { boolean: {} }, txt = { text: {} };
+    const tint = { name: "tint", selector: this._sel(["none", "amber", "blue", "violet", "green", "rose", "cyan", "orange"]) };
+    const glass = (extra) => ({ type: "expandable", name: "", title: this._t.glass, flatten: true, schema: extra });
+    if (k === "frame") return [{ name: "title", selector: txt },
+      { type: "grid", name: "", schema: [{ name: "layout", selector: this._sel(["vertical", "horizontal", "grid"]) }, ...(c.layout === "grid" ? [{ name: "columns", selector: num(1, 6, 1, "box") }] : [])] },
+      { type: "grid", name: "", schema: [{ name: "inner", selector: this._sel(["glass", "clear"]) }, tint] },
+      glass([{ name: "blur", selector: num(0, 30) }, { name: "strength", selector: num(.5, 2.5, .1) }, { type: "grid", name: "", schema: [{ name: "radius", selector: num(0, 60, 1, "box") }, { name: "padding", selector: num(0, 40, 1, "box") }, { name: "gap", selector: num(0, 30, 1, "box") }] }, { name: "refraction", selector: b }, { name: "press", selector: b }])];
+    if (k === "drop") return [{ name: "entity", selector: { entity: {} } },
+      { type: "grid", name: "", schema: [{ name: "name", selector: txt }, { name: "unit", selector: txt }] },
+      { type: "grid", name: "", schema: [{ name: "decimals", selector: num(0, 4, 1, "box") }, { name: "align", selector: this._sel(["left", "center", "right"]) }] },
+      { name: "size", selector: num(40, 300, 2) }, { name: "second", selector: b },
+      { type: "grid", name: "", schema: [tint, { name: "tap_action", selector: this._sel(["more-info", "nothing"]) }] },
+      { type: "expandable", name: "", title: this._t.advanced, flatten: true, schema: [{ name: "height", selector: num(40, 800, 1, "box") }, { name: "text", selector: txt }, { name: "image", selector: txt }] }];
+    if (k === "nav") return [{ name: "position", selector: this._sel(["inline", "bottom"]) }, { name: "blur", selector: num(0, 30) }, { name: "refraction", selector: b }];
+    return [{ name: "background_image", selector: txt }, tint, { name: "blur", selector: num(0, 30) }, { name: "strength", selector: num(.5, 2.5, .1) }, { name: "radius", selector: num(0, 60, 1, "box") },
+      { name: "refraction", selector: b }, { name: "press", selector: b }, { name: "include_headings", selector: b }];
+  }
+  _clean(c) { const d = DEF[this.kind], out = { type: c.type };
+    for (const [k, v] of Object.entries(c)) { if (k === "type" || v === undefined || v === null || v === "" || d[k] === v) continue; out[k] = v; }
+    for (const k of ["cards", "items"]) if (k in out) { const v = out[k]; delete out[k]; out[k] = v; } return out; }
+  _emit(c) { this._cfg = c; this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: c }, bubbles: true, composed: true })); }
+  _render(force) {
+    if (!this._cfg) return; const R = this.shadowRoot || this.attachShadow({ mode: "open" }), t = this._t;
+    if (!this._built || force) { this._built = true; this._ed = null;
+      R.innerHTML = `<style>:host{display:block}.h{font-weight:500;margin:20px 0 8px;color:var(--primary-text-color)}.row{display:flex;gap:6px;align-items:flex-start;border:1px solid var(--divider-color);border-radius:12px;padding:8px 4px 8px 12px;margin-bottom:8px}.row ha-form{flex:1;min-width:0}.ctl{display:flex;flex-direction:column}.add{font:inherit;color:var(--primary-color);background:none;border:1px solid var(--divider-color);border-radius:18px;padding:8px 16px;cursor:pointer}</style><ha-form></ha-form>${this.kind === "frame" ? `<div class="h">${t.cards}</div><div class="cards"></div>` : ""}${this.kind === "nav" ? `<div class="h">${t.items}</div><div class="items"></div><button class="add" type="button">+ ${t.add}</button>` : ""}`;
+      const f = R.querySelector("ha-form"); f.computeLabel = (s) => this._t[s.name] || s.name;
+      f.addEventListener("value-changed", (e) => { e.stopPropagation(); const base = Object.assign({}, this._cfg); for (const n of names(this._schema())) delete base[n]; const m = Object.assign(base, e.detail.value), o = {}; for (const k of Object.keys(this._cfg)) if (k in m) o[k] = m[k]; this._emit(this._clean(Object.assign(o, m))); this._render(false); });
+      if (this.kind === "frame") this._stack(R.querySelector(".cards"));
+      if (this.kind === "nav") R.querySelector(".add").addEventListener("click", () => { this._items((it) => it.push({ name: "", icon: "mdi:home", path: "" })); });
+    }
+    const f = R.querySelector("ha-form"); if (this._h) f.hass = this._h; f.schema = this._schema(); f.data = Object.assign({}, DEF[this.kind], this._cfg);
+    if (this._ed && JSON.stringify(this._cfg.cards || []) !== this._cards) { this._cards = JSON.stringify(this._cfg.cards || []); this._ed.setConfig({ type: "vertical-stack", cards: this._cfg.cards || [] }); }
+    if (this.kind === "nav") this._rows();
+  }
+  async _stack(box) {
+    let C = customElements.get("hui-vertical-stack-card"); if (!C) { const H = await helpers(); if (H) H.createCardElement({ type: "vertical-stack", cards: [] }); await customElements.whenDefined("hui-vertical-stack-card"); C = customElements.get("hui-vertical-stack-card"); }
+    const ed = await C.getConfigElement(); if (this._h) ed.hass = this._h; if (this._lv) ed.lovelace = this._lv;
+    this._cards = JSON.stringify(this._cfg.cards || []); ed.setConfig({ type: "vertical-stack", cards: this._cfg.cards || [] });
+    ed.addEventListener("config-changed", (e) => { e.stopPropagation(); const cards = (e.detail.config && e.detail.config.cards) || []; this._cards = JSON.stringify(cards); this._emit(this._clean(Object.assign({}, this._cfg, { cards }))); });
+    box.appendChild(ed); this._ed = ed;
+  }
+  _items(fn, keep) { const it = (this._cfg.items || []).map((x) => Object.assign({}, x)); fn(it); this._emit(this._clean(Object.assign({}, this._cfg, { items: it }))); if (!keep) this._rows(true); }
+  _rows(force) {
+    const box = this.shadowRoot.querySelector(".items"), it = this._cfg.items || [], t = this._t; if (!box) return;
+    const sch = [{ type: "grid", name: "", schema: [{ name: "name", selector: { text: {} } }, { name: "icon", selector: { icon: {} } }] }, { name: "path", selector: { navigation: {} } }];
+    if (force || box.children.length !== it.length) { box.innerHTML = "";
+      it.forEach((_, i) => { const row = document.createElement("div"); row.className = "row"; const f = document.createElement("ha-form"); f.schema = sch; f.computeLabel = (s) => this._t[s.name] || s.name;
+        f.addEventListener("value-changed", (e) => { e.stopPropagation(); const v = {}; for (const [k, x] of Object.entries(e.detail.value)) if (x !== undefined && x !== "") v[k] = x; this._items((a) => { a[i] = v; }, true); });
+        const ctl = document.createElement("div"); ctl.className = "ctl";
+        for (const [k, act] of [["up", (a) => { if (i > 0) a.splice(i - 1, 0, a.splice(i, 1)[0]); }], ["down", (a) => { if (i < a.length - 1) a.splice(i + 1, 0, a.splice(i, 1)[0]); }], ["del", (a) => { a.splice(i, 1); }]]) {
+          const b = document.createElement("ha-icon-button"); b.path = P[k]; b.label = t[k]; b.addEventListener("click", () => this._items(act)); ctl.appendChild(b); }
+        row.append(f, ctl); box.appendChild(row); }); }
+    [...box.children].forEach((row, i) => { const f = row.querySelector("ha-form"); if (this._h) f.hass = this._h; f.data = it[i]; });
+  }
+}
+if (!customElements.get("fluid-glass-editor")) customElements.define("fluid-glass-editor", FluidGlassEditor);
+const editorFor = (kind) => { const e = document.createElement("fluid-glass-editor"); e.kind = kind; return e; };
+
 const reg = (n, C, name, desc) => { if (!customElements.get(n)) customElements.define(n, C); window.customCards = window.customCards || []; if (!window.customCards.some((x) => x.type === n)) window.customCards.push({ type: n, name, description: desc, preview: false, documentationURL: "https://github.com/RomanM78/fluid-glass-cards" }); };
-reg("fluid-glass-card", FluidGlassCard, "Fluid Glass – frame", "Glass frame with refraction around any cards");
-reg("fluid-glass-drop-card", FluidGlassDropCard, "Fluid Glass – drop", "Draggable glass drops that show an entity value");
-reg("fluid-glass-nav-card", FluidGlassNavCard, "Fluid Glass – navigation", "Glass navigation bar with a sliding drop");
-reg("fluid-glass-view", FluidGlassView, "Fluid Glass – whole view", "Turns every card of this view into glass");
+reg("fluid-glass-card", FluidGlassCard, "Fluid Glass \u2013 frame", "Glass frame with refraction around any cards");
+reg("fluid-glass-drop-card", FluidGlassDropCard, "Fluid Glass \u2013 drop", "Draggable glass drops that show an entity value");
+reg("fluid-glass-nav-card", FluidGlassNavCard, "Fluid Glass \u2013 navigation", "Glass navigation bar with a sliding drop");
+reg("fluid-glass-view", FluidGlassView, "Fluid Glass \u2013 whole view", "Turns every card of this view into glass");
 console.info(`%c FLUID-GLASS-CARDS %c ${VERSION} `, "background:#7ab8ff;color:#002;font-weight:700", "background:#e8f2ff;color:#002");
 })();

@@ -33,6 +33,10 @@ or let `fluid-glass-view` set it (see below).
 
 ## The cards
 
+Every card has a visual editor: pick it in *Add card*, set the options with sliders, switches and
+pickers, and add the cards inside a glass frame just like in a vertical stack. The YAML options below
+work as well.
+
 ### Glass frame – `custom:fluid-glass-card`
 
 Puts any cards into one glass frame. The edges bend the picture behind them like a lens, the cards
